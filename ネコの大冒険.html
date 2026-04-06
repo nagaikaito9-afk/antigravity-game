@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ネコの大冒険</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 1. Title Screen -->
+        <div id="title-screen" class="screen">
+            <h1 class="logo">ネコの大冒険</h1>
+            <p class="subtitle">2Dアクション・プラットフォーマー</p>
+            <button id="btn-start" class="btn-primary">スタート</button>
+            <div style="display: flex; gap: 10px; position: absolute; bottom: 20px; left: 20px;">
+                <button id="btn-shop" class="btn-secondary" style="font-size: 10px; width: 100px;">ショップ</button>
+                <button id="btn-settings" class="btn-secondary" style="font-size: 10px; width: 100px;">操作設定</button>
+            </div>
+        </div>
+
+        <!-- 2. Stage Select Screen -->
+        <div id="stage-select-screen" class="screen hidden">
+            <h2>ステージセレクト</h2>
+            <div class="stats-bar">
+                <span>スコア: <span id="select-score">0</span></span>
+                <span>累計コイン: <span id="total-coins">0</span></span>
+                <span>ライフ: <span id="select-life">3</span></span>
+            </div>
+            <div class="stage-buttons">
+                <button class="btn-stage" id="btn-stage-1" data-stage="1">ステージ 1</button>
+                <button class="btn-stage" id="btn-stage-2" data-stage="2" disabled>ステージ 2</button>
+                <button class="btn-stage" id="btn-stage-3" data-stage="3" disabled>ステージ 3</button>
+            </div>
+            <div class="stage-buttons">
+                <button class="btn-stage" id="btn-stage-4" data-stage="4" disabled>ステージ 4</button>
+                <button class="btn-stage" id="btn-stage-5" data-stage="5" disabled>ステージ 5</button>
+            </div>
+            <button id="btn-back-to-title-from-select" class="btn-secondary mt-20">タイトルへ戻る</button>
+            <br>
+            <button id="btn-reset-progress" class="btn-danger mt-20" style="background-color: #ff4444; color: white; border: 4px solid #fff; padding: 10px; font-family: 'Press Start 2P', cursive; font-size: 10px; cursor: pointer;">データリセット</button>
+        </div>
+
+        <!-- 3. Playing/Engine Screen -->
+        <div id="game-screen" class="screen hidden">
+            <!-- Main Canvas -->
+            <canvas id="gameCanvas" width="1000" height="600"></canvas>
+            
+            <!-- HUD -->
+            <div id="hud">
+                <div class="hud-col">
+                    <div id="score-text-display" style="color:#00ffcc">スコア: 0</div>
+                    <div id="score-display">ステージ: 1</div>
+                    <div>コイン: <span id="coin-display">0</span></div>
+                </div>
+                <div class="hud-col center">
+                    <div id="time-display">180</div>
+                </div>
+                <div class="hud-col right">
+                    <div id="life-display">ライフ: 3</div>
+                    <div id="ammo-display">弾: 15 / 15</div>
+                </div>
+            </div>
+
+            <!-- Overlays -->
+            <div id="game-over-screen" class="overlay hidden">
+                <h1 id="gameover-title">ゲームオーバー</h1>
+                <button id="retry-btn" class="btn-primary">リトライ</button>
+                <button id="go-title-btn" class="btn-secondary">セレクト画面へ</button>
+            </div>
+
+            <div id="clear-screen" class="overlay hidden">
+                <h1 id="clear-title">ステージクリア！</h1>
+                <div id="clear-bonus-details" style="font-size: 14px; text-align: left; margin: 0 auto 20px; width: fit-content; line-height: 1.8;">
+                    <div>残り時間ボーナス: <span id="clear-time-bonus">0</span> (1s = 2pt)</div>
+                    <div>残り弾数ボーナス: <span id="clear-ammo-bonus">0</span> (1b = 10pt)</div>
+                    <div>残りライフボーナス: <span id="clear-life-bonus">0</span> (1life = 20pt)</div>
+                </div>
+                <p id="clear-score-display">スコア: 0</p>
+                <p id="clear-rank-display" style="font-size: 48px; color: #f1c40f; margin-bottom: 20px;">RANK: -</p>
+                <button id="next-stage-btn" class="btn-primary">次のステージへ</button>
+                <button id="clear-to-select-btn" class="btn-secondary">セレクト画面へ</button>
+            </div>
+
+        </div>
+
+        <!-- 4. Shop Screen Overlay -->
+        <div id="shop-screen" class="screen hidden" style="background-color: rgba(0, 0, 0, 0.9); z-index: 20;">
+            <h1>ショップ</h1>
+            <div style="background: #111; padding: 20px; border: 4px solid #444; margin-bottom: 20px; width: 80%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span style="font-size: 12px; color: #fff;">ネコのHP+1 (最大ライフを4にする)</span>
+                    <button id="btn-buy-hp" class="btn-primary" style="font-size: 10px; padding: 8px 12px;">100 コイン</button>
+                </div>
+                <p style="font-size: 10px; color: #888;">※一度だけ購入可能です</p>
+            </div>
+            <p style="font-size: 18px; color: #f1c40f;">所持コイン: <span id="shop-coins">0</span></p>
+            <button id="btn-back-from-shop" class="btn-secondary">戻る</button>
+        </div>
+
+        <!-- 5. Tutorial Prompt -->
+        <div id="tutorial-prompt" class="overlay hidden">
+            <h1>チュートリアル</h1>
+            <p>チュートリアルを開始しますか？</p>
+            <div style="display: flex; gap: 20px;">
+                <button id="btn-tutorial-yes" class="btn-primary">はい</button>
+                <button id="btn-tutorial-no" class="btn-secondary">いいえ</button>
+            </div>
+        </div>
+
+        <!-- 5.5. Reset Confirmation Prompt -->
+        <div id="reset-confirm-prompt" class="overlay hidden">
+            <h1>データリセット</h1>
+            <p>すべての進行状況をリセットしますか？</p>
+            <div style="display: flex; gap: 20px;">
+                <button id="btn-reset-yes" class="btn-primary" style="background-color: #ff4444; border-color: #fff;">リセットする</button>
+                <button id="btn-reset-no" class="btn-secondary">やめる</button>
+            </div>
+        </div>
+
+        <!-- 6. Tutorial Message Overlay -->
+        <div id="tutorial-overlay" class="overlay hidden" style="background-color: rgba(0, 0, 0, 0.7);">
+            <div id="tutorial-card" style="background: #222; padding: 20px; border: 4px solid #fff; max-width: 80%; text-align: center;">
+                <h2 id="tutorial-title" style="color: #ffeb3b; font-size: 18px; margin-bottom: 15px;">ヒント</h2>
+                <p id="tutorial-text" style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;">内容</p>
+                <button id="btn-tutorial-next" class="btn-primary" style="font-size: 12px;">次へ</button>
+            </div>
+        </div>
+        <!-- 7. Settings Screen -->
+        <div id="settings-screen" class="screen hidden" style="background-color: rgba(0, 0, 0, 0.95); z-index: 30;">
+            <h1>操作設定</h1>
+            <div id="keyboard-settings" style="width: 80%; background: #111; padding: 20px; border: 4px solid #444;">
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>左移動:</span>
+                    <button class="btn-rebind" data-action="left">Key</button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>右移動:</span>
+                    <button class="btn-rebind" data-action="right">Key</button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>ジャンプ:</span>
+                    <button class="btn-rebind" data-action="jump">Key</button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>攻撃:</span>
+                    <button class="btn-rebind" data-action="shoot">Key</button>
+                </div>
+            </div>
+            <p id="rebind-prompt" style="font-size: 10px; color: #ffeb3b; margin: 15px 0; height: 1.5em;"></p>
+            <button id="btn-back-from-settings" class="btn-secondary">戻る</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
